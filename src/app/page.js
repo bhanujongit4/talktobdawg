@@ -205,13 +205,13 @@ export default function EphemeralChat() {
     return `${hoursLeft}h left`;
   };
 
-  if (page === 'auth') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md border border-white/20">
+   if (page === 'auth') {
+     return (
+      <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-900 flex items-center justify-center p-4">
+        <div className="bg-zinc-900/50 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md border border-zinc-800">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Ephemeral</h1>
-            <p className="text-blue-200 text-sm">Messages that disappear</p>
+            <h1 className="text-4xl font-bold text-emerald-400 mb-2">WithBhanuj</h1>
+            <p className="text-zinc-400 text-sm">In Development Phase</p>
           </div>
 
           <div className="space-y-4">
@@ -222,7 +222,7 @@ export default function EphemeralChat() {
                 maxLength={6}
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/50 border border-white/30 focus:outline-none focus:border-white/60"
+                className="w-full px-4 py-3 rounded-lg bg-zinc-800/80 text-white placeholder-zinc-500 border border-zinc-700 focus:outline-none focus:border-emerald-500"
                 placeholder="123456"
               />
             </div>
@@ -244,7 +244,7 @@ export default function EphemeralChat() {
                 <select
                   value={messageTTL}
                   onChange={(e) => setMessageTTL(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:border-white/60"
+                  className="w-full px-4 py-3 rounded-lg bg-zinc-800/80 text-white border border-zinc-700 focus:outline-none focus:border-emerald-500"
                 >
                   <option value={24} className="bg-indigo-900">24 Hours</option>
                   <option value={48} className="bg-indigo-900">48 Hours</option>
@@ -256,7 +256,7 @@ export default function EphemeralChat() {
 
             <button
               onClick={handleAuth}
-              className="w-full bg-white text-indigo-900 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+              className="w-full bg-emerald-500 text-black py-3 rounded-lg font-semibold hover:bg-emerald-400 transition"
             >
               {isSignup ? 'Create Account' : 'Login'}
             </button>
@@ -266,7 +266,7 @@ export default function EphemeralChat() {
                 setIsSignup(!isSignup);
                 setError('');
               }}
-              className="w-full text-white/80 text-sm hover:text-white transition"
+              className="w-full text-zinc-400 text-sm hover:text-white transition"
             >
               {isSignup ? 'Already have a PIN? Login' : 'Need a PIN? Sign up'}
             </button>
@@ -278,18 +278,18 @@ export default function EphemeralChat() {
 
   if (page === 'contacts') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-900 p-4">
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
-            <div className="bg-white/5 px-6 py-4 flex items-center justify-between border-b border-white/20">
+          <div className="bg-zinc-900/50 backdrop-blur-lg rounded-2xl border border-zinc-800 overflow-hidden">
+            <div className="bg-zinc-900/80 px-6 py-4 flex items-center justify-between border-b border-zinc-800">
               <div className="flex items-center gap-3">
                 <User className="text-white" size={24} />
                 <div>
                   <h2 className="text-white font-semibold">Your PIN: {currentUser.pin}</h2>
-                  <p className="text-blue-200 text-xs">Messages expire in {currentUser.ttl}h</p>
+                  <p className="text-zinc-400 text-xs">Messages expire in {currentUser.ttl}h</p>
                 </div>
               </div>
-              <button onClick={logout} className="text-white/80 hover:text-white transition">
+              <button onClick={logout} className="text-zinc-400 hover:text-white transition">
                 <LogOut size={20} />
               </button>
             </div>
@@ -303,11 +303,11 @@ export default function EphemeralChat() {
                   value={chatPin}
                   onChange={(e) => setChatPin(e.target.value.replace(/\D/g, ''))}
                   placeholder="Enter 6-digit PIN"
-                  className="flex-1 px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/50 border border-white/30 focus:outline-none focus:border-white/60"
+                  className="flex-1 px-4 py-3 rounded-lg bg-zinc-800/80 text-white placeholder-zinc-500 border border-zinc-700 focus:outline-none focus:border-emerald-500"
                 />
                 <button
                   onClick={startChat}
-                  className="px-6 py-3 bg-white text-indigo-900 rounded-lg font-semibold hover:bg-blue-50 transition"
+                  className="px-6 py-3 bg-emerald-500 text-black rounded-lg font-semibold hover:bg-emerald-400 transition"
                 >
                   Chat
                 </button>
@@ -325,7 +325,7 @@ export default function EphemeralChat() {
                           setSelectedContact(contact);
                           setPage('chat');
                         }}
-                        className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 rounded-lg text-left text-white transition border border-white/10"
+                        className="w-full px-4 py-3 bg-zinc-800/60 hover:bg-zinc-700/60 rounded-lg text-left text-white transition border border-zinc-700"
                       >
                         PIN: {contact}
                       </button>
@@ -341,24 +341,24 @@ export default function EphemeralChat() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex flex-col">
-      <div className="bg-white/10 backdrop-blur-lg border-b border-white/20 px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-900 flex flex-col">
+      <div className="bg-zinc-900/50 backdrop-blur-lg border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
         <button
           onClick={() => {
             setPage('contacts');
             setSelectedContact('');
           }}
-          className="text-white hover:text-blue-200 transition"
+          className="text-white hover:text-zinc-300 transition"
         >
           ← Back
         </button>
         <div className="text-center">
           <h2 className="text-white font-semibold">PIN: {selectedContact}</h2>
-          <p className="text-blue-200 text-xs flex items-center gap-1 justify-center">
+          <p className="text-zinc-400 text-xs flex items-center gap-1 justify-center">
             <Clock size={12} /> Messages expire in {currentUser.ttl}h
           </p>
         </div>
-        <button onClick={logout} className="text-white/80 hover:text-white transition">
+        <button onClick={logout} className="text-zinc-400 hover:text-white transition">
           <LogOut size={20} />
         </button>
       </div>
@@ -372,8 +372,8 @@ export default function EphemeralChat() {
             <div
               className={`max-w-xs px-4 py-2 rounded-2xl ${
                 msg.from === currentUser.pin
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white/20 text-white border border-white/30'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-zinc-800 text-white border border-zinc-700'
               }`}
             >
               <p className="break-words">{msg.text}</p>
@@ -386,7 +386,7 @@ export default function EphemeralChat() {
         ))}
       </div>
 
-      <div className="bg-white/10 backdrop-blur-lg border-t border-white/20 p-4">
+      <div className="bg-zinc-900/50 backdrop-blur-lg border-t border-zinc-800 p-4">
         <div className="flex gap-2">
           <input
             type="text"
@@ -394,11 +394,11 @@ export default function EphemeralChat() {
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-3 rounded-full bg-white/20 text-white placeholder-white/50 border border-white/30 focus:outline-none focus:border-white/60"
+            className="flex-1 px-4 py-3 rounded-full bg-zinc-800/80 text-white placeholder-zinc-500 border border-zinc-700 focus:outline-none focus:border-emerald-500"
           />
           <button
             onClick={sendMessage}
-            className="p-3 bg-blue-500 hover:bg-600 rounded-full text-white transition"
+            className="p-3 bg-emerald-600 hover:bg-emerald-500 rounded-full text-white transition"
           >
             <Send size={20} />
           </button>
