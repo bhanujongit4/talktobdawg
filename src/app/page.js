@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Send, LogOut, Clock, User, Reply } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, push, set, onValue, query, orderByChild, equalTo, remove } from 'firebase/database';
-
+import Todo from './components/todo';
 // Replace with your Firebase config from Firebase Console
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -290,7 +290,7 @@ export default function EphemeralChat() {
   }
 
   if (page === 'contacts') {
-    return (
+    return (<>
       <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-900 p-4">
         <div className="max-w-2xl mx-auto">
           <div className="bg-zinc-900/50 backdrop-blur-lg rounded-2xl border border-zinc-800 overflow-hidden">
@@ -350,6 +350,7 @@ export default function EphemeralChat() {
           </div>
         </div>
       </div>
+      <Todo></Todo></>
     );
   }
 
@@ -406,7 +407,6 @@ export default function EphemeralChat() {
                 <p className="break-words">{msg.text}</p>
                 <div className="flex items-center justify-between gap-2 mt-1">
                   <p className="text-xs opacity-70">{formatTime(msg.timestamp)}</p>
-                  <p className="text-xs opacity-50">{getTimeLeft(msg.expiresAt)}</p>
                 </div>
               </div>
 
