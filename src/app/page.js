@@ -260,7 +260,7 @@ export default function EphemeralChat() {
                   className="w-full px-4 py-3 rounded-lg bg-zinc-800/80 text-white border border-zinc-700 focus:outline-none focus:border-emerald-500"
                 >
                   <option value={24} className="bg-indigo-900">24 Hours</option>
-                  <option value={48} className="bg-indigo-900">48 Hours</option>
+                   <option value={480000}>54 Years</option> 
                 </select>
               </div>
             )}
