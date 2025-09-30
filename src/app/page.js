@@ -1,6 +1,6 @@
 "use client"
-import { useState, useEffect } from 'react';
-import { Send, LogOut, Clock, User } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Send, LogOut, Clock, User, Reply } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, push, set, onValue, query, orderByChild, equalTo, remove } from 'firebase/database';
 
@@ -32,6 +32,13 @@ export default function EphemeralChat() {
   const [messages, setMessages] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [error, setError] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
+  
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
@@ -58,6 +65,7 @@ export default function EphemeralChat() {
             ...val
           })).sort((a, b) => a.timestamp - b.timestamp);
           setMessages(msgArray);
+          setTimeout(scrollToBottom, 100);
         } else {
           setMessages([]);
         }
@@ -177,11 +185,16 @@ export default function EphemeralChat() {
       to: selectedContact,
       text: messageInput,
       timestamp: Date.now(),
-      expiresAt: Date.now() + (ttlHours * 60 * 60 * 1000)
+      expiresAt: Date.now() + (ttlHours * 60 * 60 * 1000),
+      replyTo: replyingTo ? {
+        text: replyingTo.text,
+        from: replyingTo.from
+      } : null
     };
     
     set(newMessageRef, newMessage).then(() => {
       setMessageInput('');
+      setReplyingTo(null);
       loadContacts(currentUser.pin);
     });
   };
@@ -367,26 +380,65 @@ export default function EphemeralChat() {
         {messages.map(msg => (
           <div
             key={msg.id}
-            className={`flex ${msg.from === currentUser.pin ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${msg.from === currentUser.pin ? 'justify-end' : 'justify-start'} group`}
           >
-            <div
-              className={`max-w-xs px-4 py-2 rounded-2xl ${
-                msg.from === currentUser.pin
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-zinc-800 text-white border border-zinc-700'
-              }`}
-            >
-              <p className="break-words">{msg.text}</p>
-              <div className="flex items-center justify-between gap-2 mt-1">
-                <p className="text-xs opacity-70">{formatTime(msg.timestamp)}</p>
-                <p className="text-xs opacity-50">{getTimeLeft(msg.expiresAt)}</p>
+            <div className="relative max-w-xs">
+              {msg.replyTo && (
+                <div className={`mb-1 px-3 py-2 rounded-lg text-xs ${
+                  msg.from === currentUser.pin 
+                    ? 'bg-emerald-700/50 text-emerald-100' 
+                    : 'bg-zinc-700/50 text-zinc-300'
+                } border-l-2 ${
+                  msg.from === currentUser.pin ? 'border-emerald-400' : 'border-zinc-500'
+                }`}>
+                  <p className="opacity-70 mb-1">↩ {msg.replyTo.from === currentUser.pin ? 'You' : msg.replyTo.from}</p>
+                  <p className="truncate">{msg.replyTo.text}</p>
+                </div>
+              )}
+              
+              <div
+                className={`px-4 py-2 rounded-2xl ${
+                  msg.from === currentUser.pin
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-zinc-800 text-white border border-zinc-700'
+                }`}
+              >
+                <p className="break-words">{msg.text}</p>
+                <div className="flex items-center justify-between gap-2 mt-1">
+                  <p className="text-xs opacity-70">{formatTime(msg.timestamp)}</p>
+                  <p className="text-xs opacity-50">{getTimeLeft(msg.expiresAt)}</p>
+                </div>
               </div>
+
+              <button
+                onClick={() => setReplyingTo(msg)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 right-0 bg-zinc-800 rounded-lg p-1.5 border border-zinc-700 text-zinc-400 hover:text-white"
+                title="Reply"
+              >
+                <Reply size={16} />
+              </button>
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="bg-zinc-900/50 backdrop-blur-lg border-t border-zinc-800 p-4">
+        {replyingTo && (
+          <div className="mb-2 px-4 py-2 bg-zinc-800 rounded-lg flex items-center justify-between border border-zinc-700">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-zinc-400 mb-1">Replying to {replyingTo.from === currentUser.pin ? 'yourself' : replyingTo.from}</p>
+              <p className="text-sm text-white truncate">{replyingTo.text}</p>
+            </div>
+            <button
+              onClick={() => setReplyingTo(null)}
+              className="ml-2 text-zinc-400 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        
         <div className="flex gap-2">
           <input
             type="text"
