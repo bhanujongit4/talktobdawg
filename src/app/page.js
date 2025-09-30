@@ -410,13 +410,13 @@ export default function EphemeralChat() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setReplyingTo(msg)}
-                className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity absolute -top-8 right-0 bg-zinc-800 rounded-lg p-1.5 border border-zinc-700 text-zinc-400 hover:text-white"
-                title="Reply"
-              >
-                <Reply size={16} />
-              </button>
+             <button
+  onClick={() => setReplyingTo(msg)}
+  className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity absolute -top-6 right-0 bg-zinc-800 rounded-lg p-1 border border-zinc-700 text-zinc-400 hover:text-white"
+  title="Reply"
+>
+  <Reply size={14} />
+</button>
             </div>
           </div>
         ))}
