@@ -25,13 +25,14 @@ export default function EphemeralChat() {
   const [pin, setPin] = useState('');
   const [password, setPassword] = useState('');
   const [isSignup, setIsSignup] = useState(false);
-  const [messageTTL, setMessageTTL] = useState(48);
+  const [messageTTL, setMessageTTL] = useState('24');
   const [selectedContact, setSelectedContact] = useState('');
   const [chatPin, setChatPin] = useState('');
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [error, setError] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
@@ -75,7 +76,7 @@ export default function EphemeralChat() {
         const now = Date.now();
         Object.entries(data).forEach(([chatId, chatMsgs]) => {
           Object.entries(chatMsgs).forEach(([msgId, msg]) => {
-            if (msg.expiresAt <= now) {
+            if (msg.expiresAt && msg.expiresAt <= now) {
               remove(ref(db, `messages/${chatId}/${msgId}`));
             }
           });
@@ -164,6 +165,21 @@ export default function EphemeralChat() {
     }, { onlyOnce: true });
   };
 
+  const toggleLike = (msgId) => {
+    const chatId = [currentUser.pin, selectedContact].sort().join('_');
+    const messageRef = ref(db, `messages/${chatId}/${msgId}`);
+    
+    const msg = messages.find(m => m.id === msgId);
+    const likes = msg.likes || [];
+    const hasLiked = likes.includes(currentUser.pin);
+    
+    const updatedLikes = hasLiked 
+      ? likes.filter(pin => pin !== currentUser.pin)
+      : [...likes, currentUser.pin];
+    
+    update(messageRef, { likes: updatedLikes });
+  };
+
   const sendMessage = () => {
     if (!messageInput.trim()) return;
     
@@ -171,17 +187,19 @@ export default function EphemeralChat() {
     const messagesRef = ref(db, `messages/${chatId}`);
     const newMessageRef = push(messagesRef);
     
-    const ttlHours = currentUser.ttl;
     const newMessage = {
       from: currentUser.pin,
       to: selectedContact,
       text: messageInput,
       timestamp: Date.now(),
-      expiresAt: Date.now() + (ttlHours * 60 * 60 * 1000)
+      expiresAt: currentUser.ttl === '24' ? Date.now() + (24 * 60 * 60 * 1000) : null,
+      likes: [],
+      replyTo: replyingTo ? replyingTo.id : null
     };
     
     set(newMessageRef, newMessage).then(() => {
       setMessageInput('');
+      setReplyingTo(null);
       loadContacts(currentUser.pin);
     });
   };
@@ -201,12 +219,17 @@ export default function EphemeralChat() {
   };
 
   const getTimeLeft = (expiresAt) => {
+    if (!expiresAt) return 'Forever';
     const hoursLeft = Math.ceil((expiresAt - Date.now()) / (1000 * 60 * 60));
     return `${hoursLeft}h left`;
   };
 
-   if (page === 'auth') {
-     return (
+  const getRepliedMessage = (replyToId) => {
+    return messages.find(m => m.id === replyToId);
+  };
+
+  if (page === 'auth') {
+    return (
       <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-900 flex items-center justify-center p-4">
         <div className="bg-zinc-900/50 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md border border-zinc-800">
           <div className="text-center mb-8">
@@ -233,7 +256,7 @@ export default function EphemeralChat() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/50 border border-white/30 focus:outline-none focus:border-white/60"
+                className="w-full px-4 py-3 rounded-lg bg-zinc-800/80 text-white placeholder-zinc-500 border border-zinc-700 focus:outline-none focus:border-emerald-500"
                 placeholder="••••••"
               />
             </div>
@@ -243,11 +266,11 @@ export default function EphemeralChat() {
                 <label className="block text-white text-sm mb-2">Message Lifespan</label>
                 <select
                   value={messageTTL}
-                  onChange={(e) => setMessageTTL(Number(e.target.value))}
+                  onChange={(e) => setMessageTTL(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg bg-zinc-800/80 text-white border border-zinc-700 focus:outline-none focus:border-emerald-500"
                 >
-                  <option value={24} className="bg-indigo-900">24 Hours</option>
-                  <option value={48} className="bg-indigo-900">48 Hours</option>
+                  <option value="24" className="bg-zinc-900">24 Hours</option>
+                  <option value="forever" className="bg-zinc-900">Keep Forever</option>
                 </select>
               </div>
             )}
@@ -286,7 +309,9 @@ export default function EphemeralChat() {
                 <User className="text-white" size={24} />
                 <div>
                   <h2 className="text-white font-semibold">Your PIN: {currentUser.pin}</h2>
-                  <p className="text-zinc-400 text-xs">Messages expire in {currentUser.ttl}h</p>
+                  <p className="text-zinc-400 text-xs">
+                    Messages {currentUser.ttl === '24' ? 'expire in 24h' : 'kept forever'}
+                  </p>
                 </div>
               </div>
               <button onClick={logout} className="text-zinc-400 hover:text-white transition">
@@ -347,6 +372,7 @@ export default function EphemeralChat() {
           onClick={() => {
             setPage('contacts');
             setSelectedContact('');
+            setReplyingTo(null);
           }}
           className="text-white hover:text-zinc-300 transition"
         >
@@ -355,7 +381,7 @@ export default function EphemeralChat() {
         <div className="text-center">
           <h2 className="text-white font-semibold">PIN: {selectedContact}</h2>
           <p className="text-zinc-400 text-xs flex items-center gap-1 justify-center">
-            <Clock size={12} /> Messages expire in {currentUser.ttl}h
+            <Clock size={12} /> Messages {currentUser.ttl === '24' ? 'expire in 24h' : 'kept forever'}
           </p>
         </div>
         <button onClick={logout} className="text-zinc-400 hover:text-white transition">
@@ -364,29 +390,84 @@ export default function EphemeralChat() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map(msg => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.from === currentUser.pin ? 'justify-end' : 'justify-start'}`}
-          >
+        {messages.map(msg => {
+          const repliedMsg = msg.replyTo ? getRepliedMessage(msg.replyTo) : null;
+          const isLiked = msg.likes && msg.likes.includes(currentUser.pin);
+          const likeCount = msg.likes ? msg.likes.length : 0;
+          
+          return (
             <div
-              className={`max-w-xs px-4 py-2 rounded-2xl ${
-                msg.from === currentUser.pin
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-zinc-800 text-white border border-zinc-700'
-              }`}
+              key={msg.id}
+              className={`flex ${msg.from === currentUser.pin ? 'justify-end' : 'justify-start'}`}
             >
-              <p className="break-words">{msg.text}</p>
-              <div className="flex items-center justify-between gap-2 mt-1">
-                <p className="text-xs opacity-70">{formatTime(msg.timestamp)}</p>
-                <p className="text-xs opacity-50">{getTimeLeft(msg.expiresAt)}</p>
+              <div
+                className={`max-w-xs ${
+                  msg.from === currentUser.pin
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-zinc-800 text-white border border-zinc-700'
+                } rounded-2xl overflow-hidden`}
+              >
+                {repliedMsg && (
+                  <div className="px-4 pt-2 pb-1 border-b border-white/10">
+                    <div className="flex items-center gap-1 text-xs opacity-70 mb-1">
+                      <Reply size={12} />
+                      <span>Reply to</span>
+                    </div>
+                    <p className="text-xs opacity-80 line-clamp-2">{repliedMsg.text}</p>
+                  </div>
+                )}
+                
+                <div className="px-4 py-2">
+                  <p className="break-words">{msg.text}</p>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <p className="text-xs opacity-70">{formatTime(msg.timestamp)}</p>
+                    <p className="text-xs opacity-50">{getTimeLeft(msg.expiresAt)}</p>
+                  </div>
+                </div>
+
+                <div className="px-2 pb-2 flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => setReplyingTo(msg)}
+                    className="p-1 hover:bg-white/10 rounded transition"
+                  >
+                    <Reply size={14} />
+                  </button>
+                  <button
+                    onClick={() => toggleLike(msg.id)}
+                    className="flex items-center gap-1 p-1 hover:bg-white/10 rounded transition"
+                  >
+                    <Heart 
+                      size={14} 
+                      className={isLiked ? 'fill-red-500 text-red-500' : ''}
+                    />
+                    {likeCount > 0 && <span className="text-xs">{likeCount}</span>}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="bg-zinc-900/50 backdrop-blur-lg border-t border-zinc-800 p-4">
+        {replyingTo && (
+          <div className="mb-2 px-4 py-2 bg-zinc-800/50 rounded-lg flex items-start justify-between gap-2 border border-zinc-700">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1 text-emerald-400 text-xs mb-1">
+                <Reply size={12} />
+                <span>Replying to</span>
+              </div>
+              <p className="text-zinc-300 text-sm truncate">{replyingTo.text}</p>
+            </div>
+            <button 
+              onClick={() => setReplyingTo(null)}
+              className="text-zinc-400 hover:text-white transition flex-shrink-0"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        
         <div className="flex gap-2">
           <input
             type="text"
