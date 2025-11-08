@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Flame, TrendingDown, Target, Plus, Calendar, Award, Trash2, Activity } from 'lucide-react';
+import { Flame, TrendingDown, Target, Plus, Calendar, Award, Trash2, Activity, ChevronUp, ChevronDown } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, push, onValue, remove } from 'firebase/database';
 
@@ -22,7 +22,7 @@ const db = getDatabase(app);
 export default function CalorieTracker() {
   const [entries, setEntries] = useState([]);
   const [caloriesIn, setCaloriesIn] = useState('');
-  const [caloriesOut, setCaloriesOut] = useState('');
+  const [expectedCaloriesOut, setExpectedCaloriesOut] = useState(2800);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -43,24 +43,36 @@ export default function CalorieTracker() {
     return () => unsubscribe();
   }, []);
 
+  const getProportionalCaloriesOut = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const minutesInDay = 24 * 60;
+    const proportion = totalMinutes / minutesInDay;
+    return Math.round(expectedCaloriesOut * proportion);
+  };
+
   const addEntry = async () => {
-    if (!caloriesIn || !caloriesOut) return;
+    if (!caloriesIn) return;
     
     setLoading(true);
     const entriesRef = ref(db, 'entries');
-    const deficit = parseInt(caloriesOut) - parseInt(caloriesIn);
+    const proportionalOut = getProportionalCaloriesOut();
+    const deficit = proportionalOut - parseInt(caloriesIn);
     
     await push(entriesRef, {
       caloriesIn: parseInt(caloriesIn),
-      caloriesOut: parseInt(caloriesOut),
+      caloriesOut: proportionalOut,
+      expectedDailyOut: expectedCaloriesOut,
       deficit,
       points: deficit,
       timestamp: Date.now(),
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     });
 
     setCaloriesIn('');
-    setCaloriesOut('');
     setLoading(false);
   };
 
@@ -82,6 +94,9 @@ export default function CalorieTracker() {
 
   const todayEntries = entries.filter(e => e.date === new Date().toISOString().split('T')[0]);
   const todayPoints = todayEntries.reduce((sum, e) => sum + e.points, 0);
+
+  const proportionalOut = getProportionalCaloriesOut();
+  const previewDeficit = caloriesIn ? proportionalOut - parseInt(caloriesIn) : 0;
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 p-6">
@@ -150,6 +165,30 @@ export default function CalorieTracker() {
             <h2 className="text-xl font-semibold">New Entry</h2>
           </div>
           
+          {/* Expected Daily Calories Out Control */}
+          <div className="mb-6 bg-zinc-800/50 border border-zinc-700 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-zinc-400 mb-1">Expected Daily Calories Out</div>
+                <div className="text-2xl font-bold text-green-500 font-mono">{expectedCaloriesOut}</div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setExpectedCaloriesOut(prev => prev - 50)}
+                  className="bg-zinc-700 hover:bg-zinc-600 text-zinc-100 p-2 rounded-lg transition-colors"
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setExpectedCaloriesOut(prev => prev + 50)}
+                  className="bg-zinc-700 hover:bg-zinc-600 text-zinc-100 p-2 rounded-lg transition-colors"
+                >
+                  <ChevronUp className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="grid md:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
@@ -166,30 +205,26 @@ export default function CalorieTracker() {
             
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
-                Calories Out
+                Proportional Out (Current Time)
               </label>
-              <input
-                type="number"
-                value={caloriesOut}
-                onChange={(e) => setCaloriesOut(e.target.value)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-zinc-100 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors font-mono"
-                placeholder="0"
-              />
+              <div className="w-full bg-zinc-800/50 border border-zinc-700 rounded-lg px-4 py-3 text-zinc-300 font-mono text-lg">
+                {proportionalOut}
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
-                Deficit
+                Deficit Preview
               </label>
-              <div className="w-full bg-zinc-800/50 border border-zinc-700 rounded-lg px-4 py-3 text-green-500 font-mono text-lg font-semibold">
-                {caloriesIn && caloriesOut ? (parseInt(caloriesOut) - parseInt(caloriesIn)).toLocaleString() : '—'}
+              <div className={`w-full bg-zinc-800/50 border border-zinc-700 rounded-lg px-4 py-3 font-mono text-lg font-semibold ${caloriesIn ? (previewDeficit >= 0 ? 'text-green-500' : 'text-red-500') : 'text-zinc-500'}`}>
+                {caloriesIn ? (previewDeficit >= 0 ? '+' : '') + previewDeficit.toLocaleString() : '—'}
               </div>
             </div>
           </div>
 
           <button
             onClick={addEntry}
-            disabled={loading || !caloriesIn || !caloriesOut}
+            disabled={loading || !caloriesIn}
             className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-500"
           >
             {loading ? 'Adding Entry...' : 'Add Entry'}
@@ -217,8 +252,9 @@ export default function CalorieTracker() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-6">
-                      <div className="text-zinc-500 text-sm font-mono min-w-24">
+                      <div className="text-zinc-500 text-sm font-mono min-w-32">
                         {entry.date}
+                        {entry.time && <span className="ml-2 text-zinc-600">{entry.time}</span>}
                       </div>
                       <div className="flex items-center gap-6 text-sm">
                         <div>
