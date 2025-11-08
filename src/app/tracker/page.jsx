@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from 'react';
 import { Flame, TrendingDown, Target, Plus, Calendar, Award, Trash2 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
