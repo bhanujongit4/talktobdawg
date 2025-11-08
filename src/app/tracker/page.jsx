@@ -1,6 +1,7 @@
-"use client"
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { Flame, TrendingDown, Target, Plus, Calendar, Award, Trash2 } from 'lucide-react';
+import { Flame, TrendingDown, Target, Plus, Calendar, Award, Trash2, Activity } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, push, onValue, remove } from 'firebase/database';
 
@@ -83,140 +84,169 @@ export default function CalorieTracker() {
   const todayPoints = todayEntries.reduce((sum, e) => sum + e.points, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-black text-zinc-100 p-6">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8 pt-8">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Flame className="w-12 h-12 text-white" />
-            <h1 className="text-5xl font-bold text-white">Calorie Tracker</h1>
+        <div className="mb-12 pt-8">
+          <div className="flex items-center gap-4 mb-3">
+            <Activity className="w-10 h-10 text-green-500" />
+            <h1 className="text-5xl font-bold tracking-tight">Calorie Tracker</h1>
           </div>
-          <p className="text-white/90 text-lg">Track your deficit, earn points, crush goals!</p>
+          <p className="text-zinc-400 text-lg ml-14">Precision tracking for optimal performance</p>
         </div>
 
-        {/* Monthly Progress Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6 transform hover:scale-[1.02] transition-transform">
-          <div className="flex items-center gap-3 mb-4">
-            <Target className="w-8 h-8 text-purple-600" />
-            <h2 className="text-2xl font-bold text-gray-800">Monthly Goal</h2>
-          </div>
-          <div className="mb-4">
-            <div className="flex justify-between mb-2">
-              <span className="text-gray-600 font-semibold">Progress</span>
-              <span className="text-2xl font-bold text-purple-600">{totalPoints.toLocaleString()} / {monthlyGoal.toLocaleString()} pts</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
-                style={{ width: `${Math.min(progress, 100)}%` }}
-              >
-                {progress > 10 && <span className="text-white text-sm font-bold">{progress.toFixed(1)}%</span>}
+        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+          {/* Monthly Goal Card */}
+          <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 transition-colors">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Target className="w-6 h-6 text-green-500" />
+                <h2 className="text-xl font-semibold">Monthly Target</h2>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-green-500">{totalPoints.toLocaleString()}</div>
+                <div className="text-sm text-zinc-500">/ {monthlyGoal.toLocaleString()} pts</div>
               </div>
             </div>
-          </div>
-          {progress >= 100 && (
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl p-4 flex items-center gap-3">
-              <Award className="w-8 h-8 text-white" />
-              <span className="text-white font-bold text-lg">🎉 Goal Achieved! Amazing work!</span>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-400">Progress</span>
+                <span className="text-zinc-300 font-mono">{progress.toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-zinc-800 rounded-full h-3 overflow-hidden">
+                <div 
+                  className="h-full bg-green-500 rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${Math.min(progress, 100)}%` }}
+                />
+              </div>
             </div>
-          )}
+
+            {progress >= 100 && (
+              <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded-lg p-4 flex items-center gap-3">
+                <Award className="w-6 h-6 text-green-500" />
+                <span className="text-green-500 font-semibold">Target achieved this month</span>
+              </div>
+            )}
+          </div>
+
+          {/* Today's Points */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 transition-colors">
+            <div className="flex items-center gap-3 mb-4">
+              <Calendar className="w-6 h-6 text-green-500" />
+              <h2 className="text-xl font-semibold">Today</h2>
+            </div>
+            <div className="text-4xl font-bold text-green-500 font-mono">
+              {todayPoints > 0 ? '+' : ''}{todayPoints.toLocaleString()}
+            </div>
+            <div className="text-sm text-zinc-500 mt-1">points</div>
+          </div>
         </div>
 
-        {/* Today's Summary */}
-        <div className="bg-white rounded-3xl shadow-2xl p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Calendar className="w-7 h-7 text-pink-600" />
-            <h2 className="text-xl font-bold text-gray-800">Today's Points</h2>
-          </div>
-          <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-            {todayPoints > 0 ? '+' : ''}{todayPoints.toLocaleString()}
-          </div>
-        </div>
-
-        {/* Input Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-6">
+        {/* Input Section */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-8">
           <div className="flex items-center gap-3 mb-6">
-            <Plus className="w-8 h-8 text-orange-600" />
-            <h2 className="text-2xl font-bold text-gray-800">Add Entry</h2>
+            <Plus className="w-6 h-6 text-green-500" />
+            <h2 className="text-xl font-semibold">New Entry</h2>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <div className="grid md:grid-cols-3 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Calories In 🍽️
+              <label className="block text-sm font-medium text-zinc-400 mb-2">
+                Calories In
               </label>
               <input
                 type="number"
                 value={caloriesIn}
                 onChange={(e) => setCaloriesIn(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none text-lg"
-                placeholder="Enter calories consumed"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-zinc-100 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors font-mono"
+                placeholder="0"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Calories Out 🔥
+              <label className="block text-sm font-medium text-zinc-400 mb-2">
+                Calories Out
               </label>
               <input
                 type="number"
                 value={caloriesOut}
                 onChange={(e) => setCaloriesOut(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:outline-none text-lg"
-                placeholder="Enter calories burned"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-zinc-100 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors font-mono"
+                placeholder="0"
               />
             </div>
-          </div>
 
-          {caloriesIn && caloriesOut && (
-            <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-4 mb-6">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingDown className="w-5 h-5 text-purple-600" />
-                <span className="font-semibold text-gray-700">Deficit Preview:</span>
-              </div>
-              <div className="text-3xl font-bold text-purple-600">
-                {(parseInt(caloriesOut) - parseInt(caloriesIn)).toLocaleString()} points
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">
+                Deficit
+              </label>
+              <div className="w-full bg-zinc-800/50 border border-zinc-700 rounded-lg px-4 py-3 text-green-500 font-mono text-lg font-semibold">
+                {caloriesIn && caloriesOut ? (parseInt(caloriesOut) - parseInt(caloriesIn)).toLocaleString() : '—'}
               </div>
             </div>
-          )}
+          </div>
 
           <button
             onClick={addEntry}
             disabled={loading || !caloriesIn || !caloriesOut}
-            className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 text-white font-bold py-4 rounded-xl hover:shadow-lg transform hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-500"
           >
-            {loading ? 'Adding...' : 'Add Entry'}
+            {loading ? 'Adding Entry...' : 'Add Entry'}
           </button>
         </div>
 
         {/* Entries List */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Recent Entries</h2>
-          <div className="space-y-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Flame className="w-6 h-6 text-green-500" />
+            <h2 className="text-xl font-semibold">Activity Log</h2>
+          </div>
+          
+          <div className="space-y-2">
             {entries.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No entries yet. Start tracking!</p>
+              <div className="text-center py-12 text-zinc-500">
+                <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No entries recorded</p>
+              </div>
             ) : (
               entries.map((entry) => (
-                <div key={entry.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-shadow">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <span className="text-sm font-semibold text-gray-600">{entry.date}</span>
-                      <span className={`text-2xl font-bold ${entry.points >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {entry.points >= 0 ? '+' : ''}{entry.points.toLocaleString()} pts
-                      </span>
+                <div 
+                  key={entry.id} 
+                  className="bg-zinc-800/50 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                      <div className="text-zinc-500 text-sm font-mono min-w-24">
+                        {entry.date}
+                      </div>
+                      <div className="flex items-center gap-6 text-sm">
+                        <div>
+                          <span className="text-zinc-500">In:</span>
+                          <span className="ml-2 text-zinc-300 font-mono">{entry.caloriesIn}</span>
+                        </div>
+                        <div>
+                          <span className="text-zinc-500">Out:</span>
+                          <span className="ml-2 text-zinc-300 font-mono">{entry.caloriesOut}</span>
+                        </div>
+                        <div>
+                          <span className="text-zinc-500">Deficit:</span>
+                          <span className="ml-2 text-zinc-300 font-mono">{entry.deficit}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex gap-6 text-sm text-gray-600">
-                      <span>In: {entry.caloriesIn}</span>
-                      <span>Out: {entry.caloriesOut}</span>
-                      <span>Deficit: {entry.deficit}</span>
+                    <div className="flex items-center gap-4">
+                      <div className={`text-xl font-bold font-mono ${entry.points >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {entry.points >= 0 ? '+' : ''}{entry.points.toLocaleString()}
+                      </div>
+                      <button
+                        onClick={() => deleteEntry(entry.id)}
+                        className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-500 p-2 hover:bg-zinc-700 rounded transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => deleteEntry(entry.id)}
-                    className="text-red-500 hover:text-red-700 p-2 hover:bg-red-100 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
                 </div>
               ))
             )}
